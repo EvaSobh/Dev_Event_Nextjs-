@@ -49,3 +49,6 @@ bookingSchema.pre("save", async function (this: BookingDocument) {
 export const Booking: Model<BookingData> =
   (models.Booking as Model<BookingData> | undefined) ??
   model<BookingData>("Booking", bookingSchema)
+
+//inforce one booking per email per event
+bookingSchema.index({ eventId: 1, email: 1 }, { unique: true, name: "unique_email_event" })

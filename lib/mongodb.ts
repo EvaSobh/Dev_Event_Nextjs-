@@ -18,19 +18,21 @@ const cached = globalThis.mongooseCache ?? (globalThis.mongooseCache = {
 /**
  * Connect to MongoDB once and reuse the connection for future requests.
  */
-export async function connectToDatabase(): Promise<Mongoose> {
+export async function connectDB(): Promise<Mongoose> {
   if (cached.conn) {
     return cached.conn
   }
 
-  const mongodbUri = process.env.MONGODB_URI
+  if (!cached.promise) {
+    const mongodbUri = process.env.MONGODB_URI
 
-  if (!mongodbUri) {
-    throw new Error("Missing MONGODB_URI environment variable.")
+    if (!mongodbUri) {
+      throw new Error("Missing MONGODB_URI environment variable.")
+    }
+
+    // Share an in-flight connection attempt so concurrent requests do not open extras.
+    cached.promise = mongoose.connect(mongodbUri)
   }
-
-  // Share an in-flight connection attempt so concurrent requests do not open extras.
-  cached.promise ??= mongoose.connect(mongodbUri)
 
   try {
     cached.conn = await cached.promise
@@ -41,3 +43,5 @@ export async function connectToDatabase(): Promise<Mongoose> {
     throw error
   }
 }
+
+export const connectToDatabase = connectDB
